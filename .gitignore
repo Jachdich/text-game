@@ -1,2 +1,7 @@
 main
 log.txt
+
+
+# Added by cargo
+
+/target
