@@ -74,20 +74,32 @@ impl Player {
 
     fn collide(&mut self, grid: &Vec<Vec<char>>) {
         let next_pos = self.pos + self.vel;
+        
         let next_ch_x = grid[self.pos.y as usize][next_pos.x as usize];
         let next_ch_y = grid[next_pos.y as usize][self.pos.x as usize];
         let next_ch_xy = grid[next_pos.y as usize][next_pos.x as usize];
+        
         let vel_x = next_pos.x as i64 - self.pos.x as i64;
         let vel_y = next_pos.y as i64 - self.pos.y as i64;
-        
-        if next_ch_y != ' ' {
-            self.vel.y = 0.0;
-        }
 
+		if next_ch_y != ' ' {
+			self.vel.y = 0.0;
+		}
+		
         if next_ch_x != ' ' {
             self.vel.x = 0.0;
         }
-        
+
+        if next_ch_xy != ' ' && next_ch_x == ' ' && next_ch_y == ' ' {
+			self.vel.x = 0.0;
+			self.vel.y = 0.0;
+        }
+    }
+
+    fn jump(&mut self, file: &Vec<Vec<char>>) {
+    	if file[(self.pos.y + 1.0) as usize][self.pos.x as usize] != ' ' {
+    		self.vel.y -= 1.0;
+    	}
     }
 }
 
@@ -125,7 +137,7 @@ fn draw_screen<W: Write>(screen: &mut Term<W>, file: &Vec<Vec<char>>) {
     }
 }
 
-fn process_input(player: &mut Player, stdin: &mut termion::input::Keys<termion::AsyncReader>) -> bool {
+fn process_input(player: &mut Player, stdin: &mut termion::input::Keys<termion::AsyncReader>, file: &Vec<Vec<char>>) -> bool {
     if let Some(c) = stdin.next() {
         match c.unwrap() {
             // Exit.
@@ -133,9 +145,9 @@ fn process_input(player: &mut Player, stdin: &mut termion::input::Keys<termion::
             Key::Ctrl('c') => return true,
             //Key::Char(c)   => println!("{}", c),
             //Key::Alt(c)    => println!("Alt-{}", c),
-            Key::Left      => player.vel.x -= 0.2,
-            Key::Right     => player.vel.x += 0.2,
-            Key::Up        => player.vel.y -= 1.0,
+            Key::Left      => player.vel.x -= 0.4,
+            Key::Right     => player.vel.x += 0.4,
+            Key::Up        => player.jump(&file),
             Key::Down      => println!("<down>"),
             _              => println!("Other"),
         }
@@ -166,7 +178,7 @@ fn main() {
 
     loop {
 	    draw_screen(&mut term, &grid);
-	    if process_input(&mut player, &mut stdin) {
+	    if process_input(&mut player, &mut stdin, &grid) {
 	        break;
 	    }
 	  	player.update(&grid);
