@@ -1,6 +1,8 @@
 //const WALL :char = '#';
 //const SPACE:char = ' ';
 
+const SPIKES: [char; 2] = ['╱', '╲'];
+
 extern crate termion;
 
 use termion::raw::IntoRawMode;
@@ -101,6 +103,10 @@ impl Player {
     		self.vel.y = -0.9;
     	}
     }
+
+    fn on(&self, grid: &Vec<Vec<char>>) -> char {
+        return grid[self.pos.y as usize + 1][self.pos.x as usize];
+    }
 }
 
 struct Term<W: Write> {
@@ -195,7 +201,10 @@ fn main() {
 	        break;
 	    }
 	  	player.update(&grid);
-	  	if (player.vel.x < 0.1) {
+	  	if player.vel.x < 0.1 {
+	  	    player.pos.x = 1.0;
+	  	}
+	  	if SPIKES.contains(&player.on(&grid)) {
 	  	    player.pos.x = 1.0;
 	  	}
 	  	player.draw(&mut term);
