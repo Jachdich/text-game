@@ -1,10 +1,10 @@
 # e
 
-#EEEEEE
-#E
-#EEEEEE
-#E
-#EEEEEE
+# EEEEEE  
+# E  
+# EEEEEE  
+# E  
+# EEEEEE  
 
 e
 
