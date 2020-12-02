@@ -34,13 +34,14 @@ impl std::ops::Add<Vec2> for Vec2 {
 }
 
 impl Vec2 {
+/*
     fn limit_x(&mut self, n: f64) {
         if self.x > n {
             self.x = n;
         } else if self.x < -n {
             self.x = -n;
         }
-    }
+    }*/
 
     fn limit_y(&mut self, n: f64) {
         if self.y > n {
@@ -54,22 +55,21 @@ impl Vec2 {
 struct Player {
     pos:   Vec2,
     vel:   Vec2,
-    accel: Vec2,
     ch:    char,
 }
 
 impl Player {
     fn update(&mut self, grid: &Vec<Vec<char>>) {
         self.vel += Vec2{x:0.0, y:0.1};
-        self.vel.x *= 0.8;
-        self.vel.limit_x(0.5);
+        //self.vel.x *= 0.8;
+        self.vel.x = 0.8;
         self.vel.limit_y(1.0);
         self.collide(&grid);
         self.pos += self.vel;
     }
 
     fn draw<W: Write>(&self, term: &mut Term<W>) {
-        term.write_to(&self.ch.to_string(), self.pos.x as u16, self.pos.y as u16);
+        term.write_to(&self.ch.to_string(), 16, self.pos.y as u16);
     }
 
     fn collide(&mut self, grid: &Vec<Vec<char>>) {
@@ -98,7 +98,7 @@ impl Player {
 
     fn jump(&mut self, file: &Vec<Vec<char>>) {
     	if file[(self.pos.y + 1.0) as usize][self.pos.x as usize] != ' ' {
-    		self.vel.y -= 1.0;
+    		self.vel.y = -0.9;
     	}
     }
 }
@@ -127,11 +127,24 @@ impl<W: Write> Term<W> {
 
 }
 
-fn draw_screen<W: Write>(screen: &mut Term<W>, file: &Vec<Vec<char>>) {
+fn draw_screen<W: Write>(screen: &mut Term<W>, file: &Vec<Vec<char>>, abs_xoffset: isize) {
+    let mut xoffset: usize = 0;
     let mut i = 0;
+    let mut j = 0;
+    if abs_xoffset > 0 {
+        xoffset = abs_xoffset as usize;
+    } else {
+        j = (-abs_xoffset) as u16;
+    }
+    let start = xoffset;
+    let mut end: usize = xoffset + termion::terminal_size().unwrap().0 as usize - j as usize;
+    
     for line in file {
-        screen.goto(0, i);
-        let str: String = line.into_iter().collect();
+        if end >= line.len() {
+            end = line.len();
+        }
+        screen.goto(j, i);
+        let str: String = line[start..end].into_iter().collect();
         screen.write(&str);
         i += 1;
     }
@@ -145,8 +158,8 @@ fn process_input(player: &mut Player, stdin: &mut termion::input::Keys<termion::
             Key::Ctrl('c') => return true,
             //Key::Char(c)   => println!("{}", c),
             //Key::Alt(c)    => println!("Alt-{}", c),
-            Key::Left      => player.vel.x -= 0.4,
-            Key::Right     => player.vel.x += 0.4,
+            //Key::Left      => player.vel.x -= 0.4,
+            //Key::Right     => player.vel.x += 0.4,
             Key::Up        => player.jump(&file),
             Key::Down      => println!("<down>"),
             _              => println!("Other"),
@@ -172,19 +185,22 @@ fn main() {
 	let mut player = Player {
 	    pos: Vec2{x: 1.0, y: 16.0},
         vel: Vec2{x: 0.0, y: 0.0},
-        accel: Vec2{x: 0.0, y: 0.0},
-        ch: '@',
+        ch: '▆',
 	};
 
     loop {
-	    draw_screen(&mut term, &grid);
+        let now = std::time::Instant::now();
+	    draw_screen(&mut term, &grid, (player.pos.x - 16.0) as isize);
 	    if process_input(&mut player, &mut stdin, &grid) {
 	        break;
 	    }
 	  	player.update(&grid);
+	  	if (player.vel.x < 0.1) {
+	  	    player.pos.x = 1.0;
+	  	}
 	  	player.draw(&mut term);
 	  	term.flush();
-	    std::thread::sleep(std::time::Duration::from_millis(1000 / 30));
+	    std::thread::sleep(std::time::Duration::from_millis(1000 / 30) - now.elapsed());
 	}
 	term.write_to(&termion::cursor::Show.to_string(), 0, 0);
     
