@@ -203,9 +203,9 @@ fn main() {
         }
         player.draw(&mut term);
         term.flush();
-        std::thread::sleep(std::time::Duration::from_millis(1000 / 30) - now.elapsed());
+        let render_time = now.elapsed();
+        println!("{:?}", render_time);
+        std::thread::sleep(std::time::Duration::from_millis(1000 / 30) - render_time);
     }
     term.write_to(&termion::cursor::Show.to_string(), 0, 0);
-
-    // Here the destructor is automatically called, and the terminal state is restored.
 }
